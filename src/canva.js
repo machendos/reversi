@@ -44,6 +44,7 @@ class Canva {
       true
     );
     this.board.fill();
+    return this;
   }
 
   changeColor(row, column, colorPrev, colorCurr) {
@@ -108,7 +109,7 @@ class Canva {
         }, FLIP_ITERATIONS);
       }
     }, FLIP_ITERATIONS);
-    this.board.fill();
+    return this;
   }
 
   onBoardClick(listener) {
@@ -124,6 +125,7 @@ class Canva {
 
       listener({ row, column });
     });
+    return this;
   }
 }
 
