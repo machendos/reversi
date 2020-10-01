@@ -1,6 +1,8 @@
 'use strict';
 
 const FLIP_ITERATIONS = 20;
+const FLIP_ITERATIONS_INTERVAL = 25;
+const CANVAS_SAGE_PIXELS_COUNT = 1;
 
 class Canva {
   constructor(container) {
@@ -11,7 +13,7 @@ class Canva {
   render() {
     const minSize = Math.min(window.innerWidth, window.innerHeight);
     this.size = minSize * 0.8;
-    thisrectSize = this.size / 8;
+    this.rectSize = this.size / 8;
     this.board.canvas.width = this.size;
     this.board.canvas.height = this.size;
   }
@@ -24,7 +26,7 @@ class Canva {
           rectRow * this.rectSize,
           rectColumt * this.rectSize,
           this.rectSize,
-          this.rectSize
+          this.rectSizeSA
         );
       }
     }
@@ -54,7 +56,7 @@ class Canva {
       this.board.arc(
         this.rectSize * (column - 0.5),
         this.rectSize * (row - 0.5),
-        this.rectSize / 2 - 1,
+        this.rectSize / 2 - CANVAS_SAGE_PIXELS_COUNT,
         0,
         Math.PI * 2,
         true
@@ -66,8 +68,12 @@ class Canva {
       this.board.ellipse(
         this.rectSize * (column - 0.5),
         this.rectSize * (row - 0.5),
-        (this.rectSize / 2) * coef - 1 < 0 ? 0 : (this.rectSize / 2) * coef - 1,
-        this.rectSize / 2 - 1 < 0 ? 0 : this.rectSize / 2 - 1,
+        (this.rectSize / 2) * coef - CANVAS_SAGE_PIXELS_COUNT < 0
+          ? 0
+          : (this.rectSize / 2) * coef - CANVAS_SAGE_PIXELS_COUNT,
+        this.rectSize / 2 - CANVAS_SAGE_PIXELS_COUNT < 0
+          ? 0
+          : this.rectSize / 2 - CANVAS_SAGE_PIXELS_COUNT,
         0,
         0,
         Math.PI * 2,
@@ -84,10 +90,12 @@ class Canva {
           this.board.ellipse(
             this.rectSize * (column - 0.5),
             this.rectSize * (row - 0.5),
-            (this.rectSize / 2) * coef - 1 < 0
+            (this.rectSize / 2) * coef - CANVAS_SAGE_PIXELS_COUNT < 0
               ? 0
-              : (this.rectSize / 2) * coef - 1,
-            this.rectSize / 2 - 1 < 0 ? 0 : this.rectSize / 2 - 1,
+              : (this.rectSize / 2) * coef - CANVAS_SAGE_PIXELS_COUNT,
+            this.rectSize / 2 - CANVAS_SAGE_PIXELS_COUNT < 0
+              ? 0
+              : this.rectSize / 2 - CANVAS_SAGE_PIXELS_COUNT,
             0,
             0,
             Math.PI * 2,
@@ -97,9 +105,9 @@ class Canva {
           if (iterationsLeft === FLIP_ITERATIONS) {
             clearInterval(intervalSecond);
           }
-        }, 25);
+        }, FLIP_ITERATIONS);
       }
-    }, 25);
+    }, FLIP_ITERATIONS);
     this.board.fill();
   }
 }
@@ -130,7 +138,9 @@ computerModeButton.onclick = () => {
   myselfModeButton.classList.remove('selected');
 };
 
-canva.changeCollor(1, 1, 'black', 'white');
+canva.put(2, 2, 'black');
+
+canva.changeCollor(2, 2, 'black', 'white');
 canva.changeCollor(3, 3, 'black', 'white');
 setTimeout(() => {
   canva.changeCollor(5, 5, 'black', 'white');
