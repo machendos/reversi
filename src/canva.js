@@ -26,7 +26,7 @@ class Canva {
           rectRow * this.rectSize,
           rectColumt * this.rectSize,
           this.rectSize,
-          this.rectSizeSA
+          this.rectSize
         );
       }
     }
@@ -46,7 +46,7 @@ class Canva {
     this.board.fill();
   }
 
-  changeCollor(row, column, colorPrev, colorCurr) {
+  changeColor(row, column, colorPrev, colorCurr) {
     let iterationsLeft = FLIP_ITERATIONS;
 
     const interval = setInterval(() => {
@@ -110,6 +110,21 @@ class Canva {
     }, FLIP_ITERATIONS);
     this.board.fill();
   }
+
+  onBoardClick(listener) {
+    this.container.addEventListener('click', event => {
+      const x =
+        event.pageX - (this.container.offsetLeft + this.container.clientLeft);
+
+      const y =
+        event.pageY - (this.container.offsetTop + this.container.clientTop);
+
+      const column = Math.ceil(x / this.rectSize);
+      const row = Math.ceil(y / this.rectSize);
+
+      listener({ row, column });
+    });
+  }
 }
 
 const canva = new Canva(document.getElementsByTagName('canvas')[0]);
@@ -140,8 +155,12 @@ computerModeButton.onclick = () => {
 
 canva.put(2, 2, 'black');
 
-canva.changeCollor(2, 2, 'black', 'white');
-canva.changeCollor(3, 3, 'black', 'white');
+canva.changeColor(2, 2, 'black', 'white');
+canva.changeColor(3, 3, 'black', 'white');
 setTimeout(() => {
-  canva.changeCollor(5, 5, 'black', 'white');
+  canva.changeColor(5, 5, 'black', 'white');
 }, 500);
+
+canva.onBoardClick(({ row, column }) => {
+  console.log(row, column);
+});
