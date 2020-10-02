@@ -1,0 +1,13 @@
+canvas {
+  /* width: 80vmin; */
+  /* height: 80vmin; */
+  background-color: darkgreen;
+}
+
+#mode {
+  float: right;
+}
+
+.selected {
+  background-color: darkgreen;
+}
