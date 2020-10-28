@@ -1,0 +1,10 @@
+{
+  "black": [
+    { "row": 3, "column": 4 },
+    { "row": 4, "column": 3 }
+  ],
+  "white": [
+    { "row": 3, "column": 3 },
+    { "row": 4, "column": 4 }
+  ]
+}

@@ -14,6 +14,9 @@ const CANVAS_SAGE_PIXELS_COUNT = 1;
 
 const PASS_TURN = 'PASS_TURN';
 
+const WIDTH = 8;
+const HEIGHT = 8;
+
 module.exports = {
   EMPTY_NUMBER,
   WHITE_NUMBER,
@@ -26,4 +29,6 @@ module.exports = {
   FLIP_ITERATIONS_INTERVAL,
   CANVAS_SAGE_PIXELS_COUNT,
   PASS_TURN,
+  WIDTH,
+  HEIGHT,
 };

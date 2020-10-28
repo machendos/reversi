@@ -8,11 +8,18 @@ const {
   AVAILABLE_NUMBER,
   EMPTY_NUMBER,
   PASS_TURN,
+  WIDTH,
+  HEIGHT,
 } = require('../utils/constants.js');
 const {
   withOnChangeListener,
   getColorsNumbersByColorName,
 } = require('../utils/helpers');
+const startedPosition = requrie(__dirname + '/../started-position.json');
+
+NO_CHIP_MATRIX_VALUE = 0;
+WHITE_CHIP_MATRIX_VALUE = 1;
+BLACK_CHIP_MATRIX_VALUE = 2;
 
 const myselfModeButton = document.getElementById('myself-mode');
 const computerModeButton = document.getElementById('computer-mode');
@@ -72,17 +79,15 @@ class ReversiController extends Canva {
   };
 
   generateStartBoard = () => {
-    // 0 corresponds for EMPTY cell, 1 - for WHITE and 2 - for BLACK, 3 - for AVAILABLE step
-    this.matrix = [
-      [0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 1, 2, 0, 0, 0],
-      [0, 0, 0, 2, 1, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0],
-    ];
+    this.matrix = Array(HEIGHT).fill(Array(WIDTH).fill(NO_CHIP_MATRIX_VALUE));
+
+    startedPosition.black.forEach(
+      ({ row, column }) => (this.matrix[row][column] = BLACK_CHIP_MATRIX_VALUE)
+    );
+
+    startedPosition.white.forEach(
+      ({ row, column }) => (this.matrix[row][column] = BLACK_CHIP_MATRIX_VALUE)
+    );
 
     this.whiteCounter = 2;
     this.blackCounter = 2;
