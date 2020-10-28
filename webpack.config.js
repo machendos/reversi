@@ -11,8 +11,20 @@ module.exports = {
   entry: {
     index: PATHS.source + '/index.js',
   },
+  mode: 'development',
   output: {
     path: PATHS.build,
     filename: 'build.js',
   },
+  module: {
+    rules: [
+      {
+        exclude: /node_modules/,
+        loader: 'babel-loader',
+        options: {
+            plugins: ['transform-class-properties']
+        }
+      },
+    ]
+},
 };

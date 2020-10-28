@@ -8,10 +8,22 @@
 
   <body>
     <header>
-      <p>Reversi</p>
+      <div class="reversi-title">
+        <p>Reversi</p>
+        <div id="counter">
+          <div class="white">
+            <p>White:</p>
+            <p id="white-counter">2</p>
+          </div>
+          <div class="black">
+            <p>Black:</p>
+            <p id="black-counter">2</p>
+          </div>
+        </div>
+      </div>
       <div id="mode">
         Select mode:
-        <button id="myself-mode">With myself</button>
+        <button class="selected" id="myself-mode">With myself</button>
         <button id="computer-mode">With computer</button>
       </div>
     </header>

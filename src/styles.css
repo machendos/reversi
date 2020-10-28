@@ -10,4 +10,35 @@ canvas {
 
 .selected {
   background-color: darkgreen;
+  color: white;
+}
+
+.reversi-title {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.reversi-title > p {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.reversi-title > #counter {
+  margin-left: 56px;
+  display: flex;
+  flex-direction: row;
+}
+
+.reversi-title > #counter > div {
+  margin-left: 16px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+#black-counter, #white-counter {
+  margin-left: 8px;
+  font-size: 18px;
+  font-weight: 600;
 }
