@@ -37,7 +37,8 @@ canvas {
   align-items: center;
 }
 
-#black-counter, #white-counter {
+#black-counter,
+#white-counter {
   margin-left: 8px;
   font-size: 18px;
   font-weight: 600;

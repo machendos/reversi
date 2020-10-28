@@ -1,4 +1,4 @@
-const {WHITE_COLOR, WHITE_NUMBER, BLACK_NUMBER } = require('./constants');
+const { WHITE_COLOR, WHITE_NUMBER, BLACK_NUMBER } = require('./constants');
 
 const withOnChangeListener = (name, value, listener) => {
   const internalFieldName = `${name}Internal`;
@@ -11,12 +11,13 @@ const withOnChangeListener = (name, value, listener) => {
     },
     get [name]() {
       return this[internalFieldName];
-    }
-  }
+    },
+  };
 };
 
-const getColorsNumbersByColorName = (playerColor) => playerColor === WHITE_COLOR
-? [WHITE_NUMBER, BLACK_NUMBER]
-: [BLACK_NUMBER, WHITE_NUMBER];
+const getColorsNumbersByColorName = playerColor =>
+  playerColor === WHITE_COLOR
+    ? [WHITE_NUMBER, BLACK_NUMBER]
+    : [BLACK_NUMBER, WHITE_NUMBER];
 
 module.exports = { withOnChangeListener, getColorsNumbersByColorName };

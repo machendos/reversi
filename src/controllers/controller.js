@@ -9,7 +9,10 @@ const {
   EMPTY_NUMBER,
   PASS_TURN,
 } = require('../utils/constants.js');
-const { withOnChangeListener, getColorsNumbersByColorName } = require('../utils/helpers');
+const {
+  withOnChangeListener,
+  getColorsNumbersByColorName,
+} = require('../utils/helpers');
 
 const myselfModeButton = document.getElementById('myself-mode');
 const computerModeButton = document.getElementById('computer-mode');
@@ -20,7 +23,11 @@ class ReversiController extends Canva {
     this.IS_USER_MODE = true;
     this.reversiModel = null;
     this.matrix = [];
-    this.playerColor = withOnChangeListener('color', BLACK_COLOR, this.onPlayerChange);
+    this.playerColor = withOnChangeListener(
+      'color',
+      BLACK_COLOR,
+      this.onPlayerChange
+    );
     this.whiteCounter = 2;
     this.blackCounter = 2;
     this.isFirstPlayerPassedTurn = false;
@@ -40,7 +47,10 @@ class ReversiController extends Canva {
 
   setAvailableSteps = () => {
     this.cleanAvailableSteps();
-    const availableSteps = this.reversiModel.calculateAvailableSteps(this.matrix, this.playerColor.color);
+    const availableSteps = this.reversiModel.calculateAvailableSteps(
+      this.matrix,
+      this.playerColor.color
+    );
 
     if (availableSteps === PASS_TURN) {
       if (!this.isFirstPlayerPassedTurn) {
@@ -52,9 +62,11 @@ class ReversiController extends Canva {
       }
     }
 
-    availableSteps.forEach(([row, column]) => this.matrix[row][column] = AVAILABLE_NUMBER);
+    availableSteps.forEach(
+      ([row, column]) => (this.matrix[row][column] = AVAILABLE_NUMBER)
+    );
     this.renderBoard();
-    
+
     if (!this.IS_USER_MODE && this.playerColor.color === WHITE_COLOR)
       this.simulateAIMove(availableSteps);
   };
@@ -94,7 +106,12 @@ class ReversiController extends Canva {
     this.matrix[row][column] = colorNumber;
     this.put(row, column, color);
 
-    const chipsToBeRecolored = this.reversiModel.getChipsToBeRecolored(this.matrix, row, column, color);
+    const chipsToBeRecolored = this.reversiModel.getChipsToBeRecolored(
+      this.matrix,
+      row,
+      column,
+      color
+    );
     chipsToBeRecolored.forEach(([row, column]) => {
       this.matrix[row][column] = colorNumber;
       this.changeColor(row, column, oldColor, color);
@@ -123,15 +140,20 @@ class ReversiController extends Canva {
       return;
     }
 
-    document.getElementById(`${color}-counter`).innerHTML = `${this[increasedCounter]}`;
-    document.getElementById(`${oppositeColor}-counter`).innerHTML = `${this[decreasedCounter]}`;
+    document.getElementById(
+      `${color}-counter`
+    ).innerHTML = `${this[increasedCounter]}`;
+    document.getElementById(
+      `${oppositeColor}-counter`
+    ).innerHTML = `${this[decreasedCounter]}`;
   };
 
   handleGameOver = () => {
     if (this.blackCounter === this.whiteCounter) {
-      document.getElementById('counter').innerHTML = "Draw";
+      document.getElementById('counter').innerHTML = 'Draw';
     } else {
-      const winner = this.blackCounter > this.whiteCounter ? BLACK_COLOR : WHITE_COLOR;
+      const winner =
+        this.blackCounter > this.whiteCounter ? BLACK_COLOR : WHITE_COLOR;
       document.getElementById('counter').innerHTML = `${winner} wins!`;
     }
   };
@@ -139,7 +161,7 @@ class ReversiController extends Canva {
   renderBoard = () => {
     for (let row = 0; row < this.matrix.length; row++) {
       for (let column = 0; column < this.matrix[row].length; column++) {
-        switch (this.matrix[row][column]){
+        switch (this.matrix[row][column]) {
           case 1:
             this.put(row, column, WHITE_COLOR);
             break;
@@ -157,18 +179,22 @@ class ReversiController extends Canva {
     }
   };
 
-  simulateAIMove = (possibleSteps) => {
+  simulateAIMove = possibleSteps => {
     setTimeout(() => {
-      const randomPCMoveIndex = Math.floor(Math.random() * (possibleSteps.length - 1));
+      const randomPCMoveIndex = Math.floor(
+        Math.random() * (possibleSteps.length - 1)
+      );
       const randomPCMove = possibleSteps[randomPCMoveIndex];
 
       this.handlePlayerClick({ row: randomPCMove[0], column: randomPCMove[1] });
     }, 1000);
   };
 
-  getOppositeColor = (color) => (color === WHITE_COLOR ? BLACK_COLOR : WHITE_COLOR);
+  getOppositeColor = color =>
+    color === WHITE_COLOR ? BLACK_COLOR : WHITE_COLOR;
 
-  togglePlayerColor = () => this.playerColor.color = this.getOppositeColor(this.playerColor.color);
+  togglePlayerColor = () =>
+    (this.playerColor.color = this.getOppositeColor(this.playerColor.color));
 
   handlePlayerClick = ({ row, column }) => {
     if (
@@ -180,11 +206,11 @@ class ReversiController extends Canva {
     } else {
       // block clicks so user don't spam on available fields until they refresh
       this.isClickBlocked = true;
-      this.handleChipPlacement(row, column, this.playerColor.color)
+      this.handleChipPlacement(row, column, this.playerColor.color);
     }
   };
 
-  handleModeChange = (mode) => {
+  handleModeChange = mode => {
     if (mode === 'user_mode') {
       this.IS_USER_MODE = true;
     } else {
@@ -195,10 +221,10 @@ class ReversiController extends Canva {
     this.setAvailableSteps();
   };
 
-  onPlayerChange = (playerColor) => {
+  onPlayerChange = playerColor => {
     this.setAvailableSteps();
     this.isClickBlocked = false;
-  }
+  };
 
   onModeChange(listener) {
     myselfModeButton.onclick = () => {

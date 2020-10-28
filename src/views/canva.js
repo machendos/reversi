@@ -154,7 +154,6 @@ class Canva {
       const y =
         event.pageY - (this.container.offsetTop + this.container.clientTop);
 
-      // - 1 is needed to fit array indexes
       const column = Math.ceil(x / this.rectSize) - 1;
       const row = Math.ceil(y / this.rectSize) - 1;
 

@@ -14,7 +14,9 @@ class ReversiModel {
   }
 
   calculateAvailableSteps = (board, playerColor) => {
-    const [checkNumber, oppositeNumber] = getColorsNumbersByColorName(playerColor);
+    const [checkNumber, oppositeNumber] = getColorsNumbersByColorName(
+      playerColor
+    );
 
     const setOfAvailableSteps = new Set();
 
@@ -22,14 +24,20 @@ class ReversiModel {
       for (let column = 0; column < board[row].length; column++) {
         if (board[row][column] === checkNumber) {
           this.getAvailableSteps(
-            board, setOfAvailableSteps, row, column, checkNumber, oppositeNumber
+            board,
+            setOfAvailableSteps,
+            row,
+            column,
+            checkNumber,
+            oppositeNumber
           );
         }
       }
     }
 
-    const arrayOfAvailableSteps =
-      Array.from(setOfAvailableSteps).map(coords => JSON.parse(coords));
+    const arrayOfAvailableSteps = Array.from(setOfAvailableSteps).map(coords =>
+      JSON.parse(coords)
+    );
 
     if (arrayOfAvailableSteps.length === 0) {
       return PASS_TURN;
@@ -44,11 +52,18 @@ class ReversiModel {
     rowIndex,
     columnIndex,
     checkNumber,
-    oppositeNumber,
+    oppositeNumber
   ) => {
     // Check Right
-    if (columnIndex < 6 && board[rowIndex][columnIndex + 1] === oppositeNumber) {
-      for (let currColumn = columnIndex + 2; currColumn < DESK_SIZE; currColumn++) {
+    if (
+      columnIndex < 6 &&
+      board[rowIndex][columnIndex + 1] === oppositeNumber
+    ) {
+      for (
+        let currColumn = columnIndex + 2;
+        currColumn < DESK_SIZE;
+        currColumn++
+      ) {
         if (board[rowIndex][currColumn] === checkNumber) {
           break;
         }
@@ -64,7 +79,10 @@ class ReversiModel {
     }
 
     // Check Left
-    if (columnIndex > 1 && board[rowIndex][columnIndex - 1] === oppositeNumber) {
+    if (
+      columnIndex > 1 &&
+      board[rowIndex][columnIndex - 1] === oppositeNumber
+    ) {
       for (let currColumn = columnIndex - 2; currColumn >= 0; currColumn--) {
         if (board[rowIndex][currColumn] === checkNumber) {
           break;
@@ -224,15 +242,24 @@ class ReversiModel {
   };
 
   getChipsToBeRecolored = (board, rowIndex, columnIndex, playerColor) => {
-    const [checkNumber, oppositeNumber] = getColorsNumbersByColorName(playerColor);
+    const [checkNumber, oppositeNumber] = getColorsNumbersByColorName(
+      playerColor
+    );
 
     const setOfChipsToBeRecolored = new Set();
 
     // Check Right
-    if (columnIndex < 6 && board[rowIndex][columnIndex + 1] === oppositeNumber) {
+    if (
+      columnIndex < 6 &&
+      board[rowIndex][columnIndex + 1] === oppositeNumber
+    ) {
       const oppositeChipsCoordsArray = [[rowIndex, columnIndex + 1]];
 
-      for (let currColumn = columnIndex + 2; currColumn < DESK_SIZE; currColumn++) {
+      for (
+        let currColumn = columnIndex + 2;
+        currColumn < DESK_SIZE;
+        currColumn++
+      ) {
         if (
           board[rowIndex][currColumn] === EMPTY_NUMBER ||
           board[rowIndex][currColumn] === AVAILABLE_NUMBER
@@ -241,7 +268,7 @@ class ReversiModel {
         }
 
         if (board[rowIndex][currColumn] === checkNumber) {
-          oppositeChipsCoordsArray.forEach((coords) => 
+          oppositeChipsCoordsArray.forEach(coords =>
             setOfChipsToBeRecolored.add(JSON.stringify(coords))
           );
           break;
@@ -254,7 +281,10 @@ class ReversiModel {
     }
 
     // Check Left
-    if (columnIndex > 1 && board[rowIndex][columnIndex - 1] === oppositeNumber) {
+    if (
+      columnIndex > 1 &&
+      board[rowIndex][columnIndex - 1] === oppositeNumber
+    ) {
       const oppositeChipsCoordsArray = [[rowIndex, columnIndex - 1]];
 
       for (let currColumn = columnIndex - 2; currColumn >= 0; currColumn--) {
@@ -266,7 +296,7 @@ class ReversiModel {
         }
 
         if (board[rowIndex][currColumn] === checkNumber) {
-          oppositeChipsCoordsArray.forEach((coords) => 
+          oppositeChipsCoordsArray.forEach(coords =>
             setOfChipsToBeRecolored.add(JSON.stringify(coords))
           );
           break;
@@ -291,7 +321,7 @@ class ReversiModel {
         }
 
         if (board[currRow][columnIndex] === checkNumber) {
-          oppositeChipsCoordsArray.forEach((coords) => 
+          oppositeChipsCoordsArray.forEach(coords =>
             setOfChipsToBeRecolored.add(JSON.stringify(coords))
           );
           break;
@@ -316,7 +346,7 @@ class ReversiModel {
         }
 
         if (board[currRow][columnIndex] === checkNumber) {
-          oppositeChipsCoordsArray.forEach((coords) => 
+          oppositeChipsCoordsArray.forEach(coords =>
             setOfChipsToBeRecolored.add(JSON.stringify(coords))
           );
           break;
@@ -347,7 +377,7 @@ class ReversiModel {
         }
 
         if (board[currRow][currColumn] === checkNumber) {
-          oppositeChipsCoordsArray.forEach((coords) => 
+          oppositeChipsCoordsArray.forEach(coords =>
             setOfChipsToBeRecolored.add(JSON.stringify(coords))
           );
           break;
@@ -381,7 +411,7 @@ class ReversiModel {
         }
 
         if (board[currRow][currColumn] === checkNumber) {
-          oppositeChipsCoordsArray.forEach((coords) => 
+          oppositeChipsCoordsArray.forEach(coords =>
             setOfChipsToBeRecolored.add(JSON.stringify(coords))
           );
           break;
@@ -415,7 +445,7 @@ class ReversiModel {
         }
 
         if (board[currRow][currColumn] === checkNumber) {
-          oppositeChipsCoordsArray.forEach((coords) => 
+          oppositeChipsCoordsArray.forEach(coords =>
             setOfChipsToBeRecolored.add(JSON.stringify(coords))
           );
           break;
@@ -449,7 +479,7 @@ class ReversiModel {
         }
 
         if (board[currRow][currColumn] === checkNumber) {
-          oppositeChipsCoordsArray.forEach((coords) => 
+          oppositeChipsCoordsArray.forEach(coords =>
             setOfChipsToBeRecolored.add(JSON.stringify(coords))
           );
           break;
@@ -464,8 +494,9 @@ class ReversiModel {
       }
     }
 
-    const arrayOfChipsToBeRecolored =
-      Array.from(setOfChipsToBeRecolored).map(coords => JSON.parse(coords));
+    const arrayOfChipsToBeRecolored = Array.from(
+      setOfChipsToBeRecolored
+    ).map(coords => JSON.parse(coords));
 
     return arrayOfChipsToBeRecolored;
   };
