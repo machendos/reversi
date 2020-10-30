@@ -1,19 +1,14 @@
 'use strict';
 
-const ReversiController = require('./Controllers/controller.js');
+const ReversiController = require(__dirname + '/controllers/controller.js');
+const ReversiModel = require(__dirname + '/models/reversi.js');
 
 const controller = new ReversiController(
   document.getElementsByTagName('canvas')[0]
 );
 
+controller.init();
 controller.render();
-controller.start();
+const model = new ReversiModel(controller);
 
-window.addEventListener(
-  'resize',
-  () => {
-    controller.render();
-    controller.start();
-  },
-  false
-);
+model.initModel();
