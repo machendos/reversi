@@ -1,505 +1,200 @@
 'use strict';
 
+const startedPosition = require(__dirname + '/../started-position.json');
+
 const {
-  EMPTY_NUMBER,
-  AVAILABLE_NUMBER,
-  DESK_SIZE,
-  PASS_TURN,
-} = require('../utils/constants');
-const { getColorsNumbersByColorName } = require('../utils/helpers');
+  CELLS_IN_ROW,
+  COMPUTER_MODE,
+  NO_CHIP_MATRIX_VALUE,
+  WHITE_CHIP_MATRIX_VALUE,
+  BLACK_CHIP_MATRIX_VALUE,
+  AVAILABLE_STEP_MATRIX_VALUE,
+  COMPUTER_THINK_TIMEOUT,
+} = require(__dirname + '/../utils/constants');
+
+const stepAvailabilityCheckStates = {
+  WAIT_OPPONENT: 1,
+  WAIT_NOT_EMPTY: 2,
+};
+
+const offsets = [-1, 0, 1];
+
+const offsetsPairs = offsets
+  .map(rowOffset => offsets.map(columnOffset => [rowOffset, columnOffset]))
+  .flat()
+  .filter(([rowOffset, columnOffset]) => rowOffset || columnOffset);
+
+function* offsetIndexesGenerator([row, column], [rowOffset, columnOffset]) {
+  row += rowOffset;
+  column += columnOffset;
+  while (row >= 0 && row < 8 && column >= 0 && column < 8) {
+    yield [row, column];
+    row += rowOffset;
+    column += columnOffset;
+  }
+}
 
 class ReversiModel {
-  constructor(controller) {
-    this.controller = controller;
+  constructor(input) {
+    this.countChipsTotal = 0;
+    this.availableSteps = [];
+    this.input = input;
+    this.gameFinished = false;
+    this.currPlayer = BLACK_CHIP_MATRIX_VALUE;
+    this.computerMode = false;
+    this.input.onModeChange(mode => {
+      this.computerMode = mode === COMPUTER_MODE;
+      this.tryComputerStep();
+    });
+    this.input.onBoardClick(({ rowIndex, columnIndex }) => {
+      if (this.computerMode && this.currPlayer === BLACK_CHIP_MATRIX_VALUE)
+        return;
+      this.makeStep(rowIndex, columnIndex);
+    });
   }
 
-  calculateAvailableSteps = (board, playerColor) => {
-    const [checkNumber, oppositeNumber] = getColorsNumbersByColorName(
-      playerColor
+  makeStep(rowIndex, columnIndex) {
+    const available = this.availableSteps.find(
+      ([testedRowIndex, testedColumnIndex]) =>
+        testedRowIndex === rowIndex && testedColumnIndex === columnIndex
+    );
+    if (!available) return;
+    if (++this.countChipsTotal >= Math.pow(CELLS_IN_ROW, 2))
+      this.gameFinished = true;
+
+    this.input.chipCounterIncrement(this.currPlayer, 1);
+
+    this.availableSteps.splice(this.availableSteps.indexOf(available), 1);
+    this.matrix[rowIndex][columnIndex] = this.currPlayer;
+    this.input.put(rowIndex, columnIndex, this.currPlayer);
+    const opponentMatrixValue = this.currPlayer === 1 ? 2 : 1;
+    available[2].map(([rowIndex, columnIndex]) => {
+      this.matrix[rowIndex][columnIndex] = this.currPlayer;
+      this.input.changeColor(
+        rowIndex,
+        columnIndex,
+        this.currPlayer === WHITE_CHIP_MATRIX_VALUE
+          ? BLACK_CHIP_MATRIX_VALUE
+          : WHITE_CHIP_MATRIX_VALUE,
+        this.currPlayer
+      );
+      this.input.chipCounterIncrement(this.currPlayer, 1);
+      this.input.chipCounterIncrement(opponentMatrixValue, -1);
+    });
+    if (!this.gameFinished) this.prepareForNextStep();
+  }
+
+  initModel() {
+    this.matrix = new Array(8)
+      .fill(null)
+      .map(() => new Array(8).fill(NO_CHIP_MATRIX_VALUE));
+
+    startedPosition.black.forEach(
+      ({ row, column }) => (this.matrix[row][column] = BLACK_CHIP_MATRIX_VALUE)
     );
 
-    const setOfAvailableSteps = new Set();
-
-    for (let row = 0; row < board.length; row++) {
-      for (let column = 0; column < board[row].length; column++) {
-        if (board[row][column] === checkNumber) {
-          this.getAvailableSteps(
-            board,
-            setOfAvailableSteps,
-            row,
-            column,
-            checkNumber,
-            oppositeNumber
-          );
-        }
-      }
-    }
-
-    const arrayOfAvailableSteps = Array.from(setOfAvailableSteps).map(coords =>
-      JSON.parse(coords)
+    startedPosition.white.forEach(
+      ({ row, column }) => (this.matrix[row][column] = WHITE_CHIP_MATRIX_VALUE)
     );
-
-    if (arrayOfAvailableSteps.length === 0) {
-      return PASS_TURN;
-    } else {
-      return arrayOfAvailableSteps;
-    }
-  };
-
-  getAvailableSteps = (
-    board,
-    setOfAvailableSteps,
-    rowIndex,
-    columnIndex,
-    checkNumber,
-    oppositeNumber
-  ) => {
-    // Check Right
-    if (
-      columnIndex < 6 &&
-      board[rowIndex][columnIndex + 1] === oppositeNumber
-    ) {
-      for (
-        let currColumn = columnIndex + 2;
-        currColumn < DESK_SIZE;
-        currColumn++
-      ) {
-        if (board[rowIndex][currColumn] === checkNumber) {
-          break;
-        }
-
-        if (
-          board[rowIndex][currColumn] === EMPTY_NUMBER ||
-          board[rowIndex][currColumn] === AVAILABLE_NUMBER
-        ) {
-          setOfAvailableSteps.add(JSON.stringify([rowIndex, currColumn]));
-          break;
-        }
-      }
-    }
-
-    // Check Left
-    if (
-      columnIndex > 1 &&
-      board[rowIndex][columnIndex - 1] === oppositeNumber
-    ) {
-      for (let currColumn = columnIndex - 2; currColumn >= 0; currColumn--) {
-        if (board[rowIndex][currColumn] === checkNumber) {
-          break;
-        }
-
-        if (
-          board[rowIndex][currColumn] === EMPTY_NUMBER ||
-          board[rowIndex][currColumn] === AVAILABLE_NUMBER
-        ) {
-          setOfAvailableSteps.add(JSON.stringify([rowIndex, currColumn]));
-          break;
-        }
-      }
-    }
-
-    // Check Up
-    if (rowIndex > 1 && board[rowIndex - 1][columnIndex] === oppositeNumber) {
-      for (let currRow = rowIndex - 2; currRow >= 0; currRow--) {
-        if (board[currRow][columnIndex] === checkNumber) {
-          break;
-        }
-
-        if (
-          board[currRow][columnIndex] === EMPTY_NUMBER ||
-          board[currRow][columnIndex] === AVAILABLE_NUMBER
-        ) {
-          setOfAvailableSteps.add(JSON.stringify([currRow, columnIndex]));
-          break;
-        }
-      }
-    }
-
-    // Check Down
-    if (rowIndex < 6 && board[rowIndex + 1][columnIndex] === oppositeNumber) {
-      for (let currRow = rowIndex + 2; currRow < DESK_SIZE; currRow++) {
-        if (board[currRow][columnIndex] === checkNumber) {
-          break;
-        }
-
-        if (
-          board[currRow][columnIndex] === EMPTY_NUMBER ||
-          board[currRow][columnIndex] === AVAILABLE_NUMBER
-        ) {
-          setOfAvailableSteps.add(JSON.stringify([currRow, columnIndex]));
-          break;
-        }
-      }
-    }
-
-    // Check Right Down
-    if (
-      rowIndex < 6 &&
-      columnIndex < 6 &&
-      board[rowIndex + 1][columnIndex + 1] === oppositeNumber
-    ) {
-      let currRow = rowIndex + 2;
-      let currColumn = columnIndex + 2;
-
-      while (currRow < DESK_SIZE && currColumn < DESK_SIZE) {
-        if (board[currRow][currColumn] === checkNumber) {
-          break;
-        }
-
-        if (
-          board[currRow][currColumn] === EMPTY_NUMBER ||
-          board[currRow][currColumn] === AVAILABLE_NUMBER
-        ) {
-          setOfAvailableSteps.add(JSON.stringify([currRow, currColumn]));
-          break;
-        }
-
-        currRow++;
-        currColumn++;
-      }
-    }
-
-    // Check Right Up
-    if (
-      rowIndex > 1 &&
-      columnIndex < 6 &&
-      board[rowIndex - 1][columnIndex + 1] === oppositeNumber
-    ) {
-      let currRow = rowIndex - 2;
-      let currColumn = columnIndex + 2;
-
-      while (currRow >= 0 && currColumn < DESK_SIZE) {
-        if (board[currRow][currColumn] === checkNumber) {
-          break;
-        }
-
-        if (
-          board[currRow][currColumn] === EMPTY_NUMBER ||
-          board[currRow][currColumn] === AVAILABLE_NUMBER
-        ) {
-          setOfAvailableSteps.add(JSON.stringify([currRow, currColumn]));
-          break;
-        }
-
-        currRow--;
-        currColumn++;
-      }
-    }
-
-    // Check Left Up
-    if (
-      rowIndex > 1 &&
-      columnIndex > 1 &&
-      board[rowIndex - 1][columnIndex - 1] === oppositeNumber
-    ) {
-      let currRow = rowIndex - 2;
-      let currColumn = columnIndex - 2;
-
-      while (currRow >= 0 && currColumn >= 0) {
-        if (board[currRow][currColumn] === checkNumber) {
-          break;
-        }
-
-        if (
-          board[currRow][currColumn] === EMPTY_NUMBER ||
-          board[currRow][currColumn] === AVAILABLE_NUMBER
-        ) {
-          setOfAvailableSteps.add(JSON.stringify([currRow, currColumn]));
-          break;
-        }
-
-        currRow--;
-        currColumn--;
-      }
-    }
-
-    // Check Left Down
-    if (
-      rowIndex < 6 &&
-      columnIndex > 1 &&
-      board[rowIndex + 1][columnIndex - 1] === oppositeNumber
-    ) {
-      let currRow = rowIndex + 2;
-      let currColumn = columnIndex - 2;
-
-      while (currRow < DESK_SIZE && currColumn >= 0) {
-        if (board[currRow][currColumn] === checkNumber) {
-          break;
-        }
-
-        if (
-          board[currRow][currColumn] === EMPTY_NUMBER ||
-          board[currRow][currColumn] === AVAILABLE_NUMBER
-        ) {
-          setOfAvailableSteps.add(JSON.stringify([currRow, currColumn]));
-          break;
-        }
-
-        currRow++;
-        currColumn--;
-      }
-    }
-  };
-
-  getChipsToBeRecolored = (board, rowIndex, columnIndex, playerColor) => {
-    const [checkNumber, oppositeNumber] = getColorsNumbersByColorName(
-      playerColor
+    this.matrix.map((row, rowIndex) =>
+      row.map((element, columnIndex) =>
+        this.input.put(rowIndex, columnIndex, element)
+      )
     );
+    this.prepareForNextStep();
 
-    const setOfChipsToBeRecolored = new Set();
+    this.input.chipCounterIncrement(
+      BLACK_CHIP_MATRIX_VALUE,
+      startedPosition.black.length
+    );
+    this.input.chipCounterIncrement(
+      WHITE_CHIP_MATRIX_VALUE,
+      startedPosition.white.length
+    );
+    this.countChipsTotal +=
+      startedPosition.black.length + startedPosition.white.length;
+  }
 
-    // Check Right
-    if (
-      columnIndex < 6 &&
-      board[rowIndex][columnIndex + 1] === oppositeNumber
-    ) {
-      const oppositeChipsCoordsArray = [[rowIndex, columnIndex + 1]];
+  prepareForNextStep() {
+    this.changeCurrPlayer();
+    this.removeOldAvailableSteps();
+    this.setNewAvailableSteps();
+    this.tryComputerStep();
+  }
 
-      for (
-        let currColumn = columnIndex + 2;
-        currColumn < DESK_SIZE;
-        currColumn++
-      ) {
-        if (
-          board[rowIndex][currColumn] === EMPTY_NUMBER ||
-          board[rowIndex][currColumn] === AVAILABLE_NUMBER
-        ) {
-          break;
-        }
+  changeCurrPlayer() {
+    this.currPlayer =
+      this.currPlayer === WHITE_CHIP_MATRIX_VALUE
+        ? BLACK_CHIP_MATRIX_VALUE
+        : WHITE_CHIP_MATRIX_VALUE;
+    this.input.setCurrPlayer(this.currPlayer);
+  }
 
-        if (board[rowIndex][currColumn] === checkNumber) {
-          oppositeChipsCoordsArray.forEach(coords =>
-            setOfChipsToBeRecolored.add(JSON.stringify(coords))
-          );
-          break;
-        }
+  removeOldAvailableSteps() {
+    this.availableSteps.forEach(indexes => this.input.remove(...indexes));
+  }
 
-        if (board[rowIndex][currColumn] === oppositeNumber) {
-          oppositeChipsCoordsArray.push([rowIndex, currColumn]);
-        }
-      }
+  setNewAvailableSteps() {
+    this.calculateAvailableSteps();
+    if (!this.availableSteps.length) return this.prepareForNextStep();
+    this.availableSteps.forEach(([rowIndex, columnIndex]) => {
+      this.input.put(rowIndex, columnIndex, AVAILABLE_STEP_MATRIX_VALUE);
+    });
+  }
+
+  tryComputerStep() {
+    if (this.gameFinished) return;
+    if (this.computerMode && this.currPlayer === BLACK_CHIP_MATRIX_VALUE) {
+      setTimeout(() => {
+        this.makeStep(
+          ...this.availableSteps[
+            Math.floor(Math.random() * this.availableSteps.length)
+          ]
+        );
+      }, COMPUTER_THINK_TIMEOUT);
     }
+  }
 
-    // Check Left
-    if (
-      columnIndex > 1 &&
-      board[rowIndex][columnIndex - 1] === oppositeNumber
-    ) {
-      const oppositeChipsCoordsArray = [[rowIndex, columnIndex - 1]];
-
-      for (let currColumn = columnIndex - 2; currColumn >= 0; currColumn--) {
-        if (
-          board[rowIndex][currColumn] === EMPTY_NUMBER ||
-          board[rowIndex][currColumn] === AVAILABLE_NUMBER
-        ) {
-          break;
+  calculateAvailableSteps() {
+    const availableSteps = [];
+    const opponentMatrixValue = this.currPlayer === 1 ? 2 : 1;
+    this.matrix.forEach((row, rowIndex) =>
+      row.forEach((element, columnIndex) => {
+        if (element === NO_CHIP_MATRIX_VALUE) {
+          const willChanged = [];
+          let available = false;
+          offsetsPairs.forEach(([rowOffset, columnOffset]) => {
+            let state = stepAvailabilityCheckStates.WAIT_OPPONENT;
+            const willChangedNotApproved = [];
+            for (const [currRow, currColumn] of offsetIndexesGenerator(
+              [rowIndex, columnIndex],
+              [rowOffset, columnOffset]
+            )) {
+              const currElement = this.matrix[currRow][currColumn];
+              if (state === stepAvailabilityCheckStates.WAIT_OPPONENT) {
+                if (currElement === opponentMatrixValue) {
+                  state = stepAvailabilityCheckStates.WAIT_NOT_EMPTY;
+                  willChangedNotApproved.push([currRow, currColumn]);
+                } else break;
+              } else {
+                if (currElement === this.currPlayer) {
+                  available = true;
+                  willChangedNotApproved.forEach(element =>
+                    willChanged.push(element)
+                  );
+                  break;
+                } else if (currElement !== opponentMatrixValue) break;
+                else willChangedNotApproved.push([currRow, currColumn]);
+              }
+            }
+          });
+          if (available)
+            availableSteps.push([rowIndex, columnIndex, willChanged]);
         }
-
-        if (board[rowIndex][currColumn] === checkNumber) {
-          oppositeChipsCoordsArray.forEach(coords =>
-            setOfChipsToBeRecolored.add(JSON.stringify(coords))
-          );
-          break;
-        }
-
-        if (board[rowIndex][currColumn] === oppositeNumber) {
-          oppositeChipsCoordsArray.push([rowIndex, currColumn]);
-        }
-      }
-    }
-
-    // Check Up
-    if (rowIndex > 1 && board[rowIndex - 1][columnIndex] === oppositeNumber) {
-      const oppositeChipsCoordsArray = [[rowIndex - 1, columnIndex]];
-
-      for (let currRow = rowIndex - 2; currRow >= 0; currRow--) {
-        if (
-          board[currRow][columnIndex] === EMPTY_NUMBER ||
-          board[currRow][columnIndex] === AVAILABLE_NUMBER
-        ) {
-          break;
-        }
-
-        if (board[currRow][columnIndex] === checkNumber) {
-          oppositeChipsCoordsArray.forEach(coords =>
-            setOfChipsToBeRecolored.add(JSON.stringify(coords))
-          );
-          break;
-        }
-
-        if (board[currRow][columnIndex] === oppositeNumber) {
-          oppositeChipsCoordsArray.push([currRow, columnIndex]);
-        }
-      }
-    }
-
-    // Check Down
-    if (rowIndex < 6 && board[rowIndex + 1][columnIndex] === oppositeNumber) {
-      const oppositeChipsCoordsArray = [[rowIndex + 1, columnIndex]];
-
-      for (let currRow = rowIndex + 2; currRow < DESK_SIZE; currRow++) {
-        if (
-          board[currRow][columnIndex] === EMPTY_NUMBER ||
-          board[currRow][columnIndex] === AVAILABLE_NUMBER
-        ) {
-          break;
-        }
-
-        if (board[currRow][columnIndex] === checkNumber) {
-          oppositeChipsCoordsArray.forEach(coords =>
-            setOfChipsToBeRecolored.add(JSON.stringify(coords))
-          );
-          break;
-        }
-
-        if (board[currRow][columnIndex] === oppositeNumber) {
-          oppositeChipsCoordsArray.push([currRow, columnIndex]);
-        }
-      }
-    }
-
-    // Check Right Down
-    if (
-      rowIndex < 6 &&
-      columnIndex < 6 &&
-      board[rowIndex + 1][columnIndex + 1] === oppositeNumber
-    ) {
-      let currRow = rowIndex + 2;
-      let currColumn = columnIndex + 2;
-      const oppositeChipsCoordsArray = [[rowIndex + 1, columnIndex + 1]];
-
-      while (currRow < DESK_SIZE && currColumn < DESK_SIZE) {
-        if (
-          board[currRow][currColumn] === EMPTY_NUMBER ||
-          board[currRow][currColumn] === AVAILABLE_NUMBER
-        ) {
-          break;
-        }
-
-        if (board[currRow][currColumn] === checkNumber) {
-          oppositeChipsCoordsArray.forEach(coords =>
-            setOfChipsToBeRecolored.add(JSON.stringify(coords))
-          );
-          break;
-        }
-
-        if (board[currRow][currColumn] === oppositeNumber) {
-          oppositeChipsCoordsArray.push([currRow, currColumn]);
-        }
-
-        currRow++;
-        currColumn++;
-      }
-    }
-
-    // Check Right Up
-    if (
-      rowIndex > 1 &&
-      columnIndex < 6 &&
-      board[rowIndex - 1][columnIndex + 1] === oppositeNumber
-    ) {
-      let currRow = rowIndex - 2;
-      let currColumn = columnIndex + 2;
-      const oppositeChipsCoordsArray = [[rowIndex - 1, columnIndex + 1]];
-
-      while (currRow >= 0 && currColumn < DESK_SIZE) {
-        if (
-          board[currRow][currColumn] === EMPTY_NUMBER ||
-          board[currRow][currColumn] === AVAILABLE_NUMBER
-        ) {
-          break;
-        }
-
-        if (board[currRow][currColumn] === checkNumber) {
-          oppositeChipsCoordsArray.forEach(coords =>
-            setOfChipsToBeRecolored.add(JSON.stringify(coords))
-          );
-          break;
-        }
-
-        if (board[currRow][currColumn] === oppositeNumber) {
-          oppositeChipsCoordsArray.push([currRow, currColumn]);
-        }
-
-        currRow--;
-        currColumn++;
-      }
-    }
-
-    // Check Left Up
-    if (
-      rowIndex > 1 &&
-      columnIndex > 1 &&
-      board[rowIndex - 1][columnIndex - 1] === oppositeNumber
-    ) {
-      let currRow = rowIndex - 2;
-      let currColumn = columnIndex - 2;
-      const oppositeChipsCoordsArray = [[rowIndex - 1, columnIndex - 1]];
-
-      while (currRow >= 0 && currColumn >= 0) {
-        if (
-          board[currRow][currColumn] === EMPTY_NUMBER ||
-          board[currRow][currColumn] === AVAILABLE_NUMBER
-        ) {
-          break;
-        }
-
-        if (board[currRow][currColumn] === checkNumber) {
-          oppositeChipsCoordsArray.forEach(coords =>
-            setOfChipsToBeRecolored.add(JSON.stringify(coords))
-          );
-          break;
-        }
-
-        if (board[currRow][currColumn] === oppositeNumber) {
-          oppositeChipsCoordsArray.push([currRow, currColumn]);
-        }
-
-        currRow--;
-        currColumn--;
-      }
-    }
-
-    // Check Left Down
-    if (
-      rowIndex < 6 &&
-      columnIndex > 1 &&
-      board[rowIndex + 1][columnIndex - 1] === oppositeNumber
-    ) {
-      let currRow = rowIndex + 2;
-      let currColumn = columnIndex - 2;
-      const oppositeChipsCoordsArray = [[rowIndex + 1, columnIndex - 1]];
-
-      while (currRow < DESK_SIZE && currColumn >= 0) {
-        if (
-          board[currRow][currColumn] === EMPTY_NUMBER ||
-          board[currRow][currColumn] === AVAILABLE_NUMBER
-        ) {
-          break;
-        }
-
-        if (board[currRow][currColumn] === checkNumber) {
-          oppositeChipsCoordsArray.forEach(coords =>
-            setOfChipsToBeRecolored.add(JSON.stringify(coords))
-          );
-          break;
-        }
-
-        if (board[currRow][currColumn] === oppositeNumber) {
-          oppositeChipsCoordsArray.push([currRow, currColumn]);
-        }
-
-        currRow++;
-        currColumn--;
-      }
-    }
-
-    const arrayOfChipsToBeRecolored = Array.from(
-      setOfChipsToBeRecolored
-    ).map(coords => JSON.parse(coords));
-
-    return arrayOfChipsToBeRecolored;
-  };
+      })
+    );
+    this.availableSteps = availableSteps;
+  }
 }
 
 module.exports = ReversiModel;
