@@ -1,8 +1,14 @@
 'use strict';
 
-const FLIP_ITERATIONS = 20;
-const FLIP_ITERATIONS_INTERVAL = 25;
-const CANVAS_SAGE_PIXELS_COUNT = 1;
+const {
+  BLACK_COLOR,
+  FLIP_ITERATIONS,
+  FLIP_ITERATIONS_INTERVAL,
+  CANVAS_SAGE_PIXELS_COUNT,
+  CELLS_IN_ROW,
+  BOARD_COLOR,
+  styles,
+} = require(__dirname + '/../utils/constants');
 
 class Canva {
   constructor(container) {
@@ -10,16 +16,20 @@ class Canva {
     this.board = container.getContext('2d');
   }
 
-  render() {
+  init() {
     const minSize = Math.min(window.innerWidth, window.innerHeight);
     this.size = minSize * 0.8;
-    this.rectSize = this.size / 8;
+    this.rectSize = this.size / CELLS_IN_ROW;
     this.board.canvas.width = this.size;
     this.board.canvas.height = this.size;
+    this.board.fillStyle = BOARD_COLOR;
+    this.board.strokeRect(0, 0, this.size, this.size);
   }
 
-  init() {
-    this.board.fillStyle = 'black';
+  render() {
+    this.board.fillStyle = BOARD_COLOR;
+    this.board.strokeRect(0, 0, this.size, this.size);
+    this.board.fillStyle = BLACK_COLOR;
     for (let rectRow = 0; rectRow < 8; rectRow++) {
       for (let rectColumt = 0; rectColumt < 8; rectColumt++) {
         this.board.strokeRect(
@@ -32,22 +42,55 @@ class Canva {
     }
   }
 
-  put(row, column, color) {
-    this.board.fillStyle = color;
+  put(row, column, style) {
+    const { fill, def, border } = styles[style];
+    const shiftedRow = row + 1;
+    const shiftedColumn = column + 1;
+
+    this.board.fillStyle = fill;
     this.board.beginPath();
     this.board.arc(
-      this.rectSize * (column - 0.5),
-      this.rectSize * (row - 0.5),
+      this.rectSize * (shiftedColumn - 0.5),
+      this.rectSize * (shiftedRow - 0.5),
       this.rectSize / 2 - 2,
       0,
       Math.PI * 2,
       true
     );
-    this.board.fill();
+
+    if (border) {
+      this.board.stroke();
+    } else {
+      this.board.fill();
+    }
+
     return this;
   }
 
-  changeColor(row, column, colorPrev, colorCurr) {
+  remove(row, column) {
+    const shiftedRow = row + 1;
+    const shiftedColumn = column + 1;
+
+    this.board.fillStyle = 'darkgreen';
+    this.board.beginPath();
+    this.board.arc(
+      this.rectSize * (shiftedColumn - 0.5),
+      this.rectSize * (shiftedRow - 0.5),
+      this.rectSize / 2 - 1,
+      0,
+      Math.PI * 2,
+      true
+    );
+
+    this.board.fill();
+  }
+
+  changeColor(row, column, stylePrev, styleCurr) {
+    const colorPrev = styles[stylePrev].fill;
+    const colorCurr = styles[styleCurr].fill;
+    const shiftedRow = row + 1;
+    const shiftedColumn = column + 1;
+
     let iterationsLeft = FLIP_ITERATIONS;
 
     const interval = setInterval(() => {
@@ -55,8 +98,8 @@ class Canva {
       this.board.fillStyle = 'darkgreen';
       this.board.beginPath();
       this.board.arc(
-        this.rectSize * (column - 0.5),
-        this.rectSize * (row - 0.5),
+        this.rectSize * (shiftedColumn - 0.5),
+        this.rectSize * (shiftedRow - 0.5),
         this.rectSize / 2 - CANVAS_SAGE_PIXELS_COUNT,
         0,
         Math.PI * 2,
@@ -67,8 +110,8 @@ class Canva {
       coef = --iterationsLeft / FLIP_ITERATIONS;
       this.board.beginPath();
       this.board.ellipse(
-        this.rectSize * (column - 0.5),
-        this.rectSize * (row - 0.5),
+        this.rectSize * (shiftedColumn - 0.5),
+        this.rectSize * (shiftedRow - 0.5),
         (this.rectSize / 2) * coef - CANVAS_SAGE_PIXELS_COUNT < 0
           ? 0
           : (this.rectSize / 2) * coef - CANVAS_SAGE_PIXELS_COUNT,
@@ -89,8 +132,8 @@ class Canva {
           coef = ++iterationsLeft / FLIP_ITERATIONS;
           this.board.beginPath();
           this.board.ellipse(
-            this.rectSize * (column - 0.5),
-            this.rectSize * (row - 0.5),
+            this.rectSize * (shiftedColumn - 0.5),
+            this.rectSize * (shiftedRow - 0.5),
             (this.rectSize / 2) * coef - CANVAS_SAGE_PIXELS_COUNT < 0
               ? 0
               : (this.rectSize / 2) * coef - CANVAS_SAGE_PIXELS_COUNT,
@@ -106,9 +149,9 @@ class Canva {
           if (iterationsLeft === FLIP_ITERATIONS) {
             clearInterval(intervalSecond);
           }
-        }, FLIP_ITERATIONS);
+        }, FLIP_ITERATIONS_INTERVAL);
       }
-    }, FLIP_ITERATIONS);
+    }, FLIP_ITERATIONS_INTERVAL);
     return this;
   }
 
@@ -120,10 +163,10 @@ class Canva {
       const y =
         event.pageY - (this.container.offsetTop + this.container.clientTop);
 
-      const column = Math.ceil(x / this.rectSize);
-      const row = Math.ceil(y / this.rectSize);
+      const columnIndex = Math.ceil(x / this.rectSize) - 1;
+      const rowIndex = Math.ceil(y / this.rectSize) - 1;
 
-      listener({ row, column });
+      listener({ rowIndex, columnIndex });
     });
     return this;
   }
