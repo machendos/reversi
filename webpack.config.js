@@ -2,29 +2,17 @@
 
 const path = require('path');
 
-const PATHS = {
-  source: path.join(__dirname, 'src'),
-  build: path.join(__dirname, 'build'),
-};
+module.exports = config;
 
-module.exports = {
-  entry: {
-    index: PATHS.source + '/index.js',
-  },
-  mode: 'development',
+var config = {
+  entry: path.join(__dirname, 'src', 'index.js'),
   output: {
-    path: PATHS.build,
+    path: path.join(__dirname, 'build'),
     filename: 'build.js',
   },
-  module: {
-    rules: [
-      {
-        exclude: /node_modules/,
-        loader: 'babel-loader',
-        options: {
-            plugins: ['transform-class-properties']
-        }
-      },
-    ]
-},
+  resolve: {
+    extensions: ['.js', '.json'],
+  },
 };
+
+module.exports = config;
