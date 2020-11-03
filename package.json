@@ -11,8 +11,8 @@
     "type": "git",
     "url": "git+https://github.com/machendos/reversi.git"
   },
-  "author": "Maksim Kuvichka and Nikita Machehin",
-  "license": "ISC",
+  "author": "Maksim Kuvichka and Nikita Machekhin",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/machendos/reversi/issues"
   },
