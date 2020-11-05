@@ -27,6 +27,7 @@ const offsetsPairs = offsets
 function* offsetIndexesGenerator([row, column], [rowOffset, columnOffset]) {
   row += rowOffset;
   column += columnOffset;
+
   while (row >= 0 && row < 8 && column >= 0 && column < 8) {
     yield [row, column];
     row += rowOffset;
@@ -42,10 +43,13 @@ class ReversiModel {
     this.gameFinished = false;
     this.currPlayer = BLACK_CHIP_MATRIX_VALUE;
     this.computerMode = false;
+    this.isOneOfPlayersStuck = false;
+
     this.input.onModeChange(mode => {
       this.computerMode = mode === COMPUTER_MODE;
       this.tryComputerStep();
     });
+
     this.input.onBoardClick(({ rowIndex, columnIndex }) => {
       if (this.computerMode && this.currPlayer === BLACK_CHIP_MATRIX_VALUE)
         return;
@@ -58,6 +62,7 @@ class ReversiModel {
       ([testedRowIndex, testedColumnIndex]) =>
         testedRowIndex === rowIndex && testedColumnIndex === columnIndex
     );
+
     if (!available) return;
     if (++this.countChipsTotal >= Math.pow(CELLS_IN_ROW, 2))
       this.gameFinished = true;
@@ -68,6 +73,7 @@ class ReversiModel {
     this.matrix[rowIndex][columnIndex] = this.currPlayer;
     this.input.put(rowIndex, columnIndex, this.currPlayer);
     const opponentMatrixValue = this.currPlayer === 1 ? 2 : 1;
+
     available[2].map(([rowIndex, columnIndex]) => {
       this.matrix[rowIndex][columnIndex] = this.currPlayer;
       this.input.changeColor(
@@ -81,7 +87,12 @@ class ReversiModel {
       this.input.chipCounterIncrement(this.currPlayer, 1);
       this.input.chipCounterIncrement(opponentMatrixValue, -1);
     });
-    if (!this.gameFinished) this.prepareForNextStep();
+
+    if (this.gameFinished) {
+      this.input.handleGameFinish()
+    } else {
+      this.prepareForNextStep()
+    };
   }
 
   initModel() {
@@ -96,6 +107,7 @@ class ReversiModel {
     startedPosition.white.forEach(
       ({ row, column }) => (this.matrix[row][column] = WHITE_CHIP_MATRIX_VALUE)
     );
+
     this.matrix.map((row, rowIndex) =>
       row.map((element, columnIndex) =>
         this.input.put(rowIndex, columnIndex, element)
@@ -107,10 +119,12 @@ class ReversiModel {
       BLACK_CHIP_MATRIX_VALUE,
       startedPosition.black.length
     );
+
     this.input.chipCounterIncrement(
       WHITE_CHIP_MATRIX_VALUE,
       startedPosition.white.length
     );
+
     this.countChipsTotal +=
       startedPosition.black.length + startedPosition.white.length;
   }
@@ -136,7 +150,24 @@ class ReversiModel {
 
   setNewAvailableSteps() {
     this.calculateAvailableSteps();
-    if (!this.availableSteps.length) return this.prepareForNextStep();
+
+    if (!this.availableSteps.length) {
+      if (!this.isOneOfPlayersStuck) {
+        // if no available steps, we mark that one player is stuck
+        // and move turn to his opponent
+        this.isOneOfPlayersStuck = true;
+        return this.prepareForNextStep();
+      } else {
+        // if player's opponent was stuck and now player don't have
+        // available steps, game is finished
+        this.input.handleGameFinish();
+      }
+    } else {
+      // drop isOneOfPlayersStuck flag in case if player don't have
+      // available steps, but his opponent has
+      this.isOneOfPlayersStuck = false;
+    }
+
     this.availableSteps.forEach(([rowIndex, columnIndex]) => {
       this.input.put(rowIndex, columnIndex, AVAILABLE_STEP_MATRIX_VALUE);
     });
@@ -144,6 +175,7 @@ class ReversiModel {
 
   tryComputerStep() {
     if (this.gameFinished) return;
+
     if (this.computerMode && this.currPlayer === BLACK_CHIP_MATRIX_VALUE) {
       setTimeout(() => {
         this.makeStep(
@@ -158,37 +190,50 @@ class ReversiModel {
   calculateAvailableSteps() {
     const availableSteps = [];
     const opponentMatrixValue = this.currPlayer === 1 ? 2 : 1;
+
     this.matrix.forEach((row, rowIndex) =>
       row.forEach((element, columnIndex) => {
         if (element === NO_CHIP_MATRIX_VALUE) {
           const willChanged = [];
-          let available = false;
+          let isAvailable = false;
+
           offsetsPairs.forEach(([rowOffset, columnOffset]) => {
             let state = stepAvailabilityCheckStates.WAIT_OPPONENT;
             const willChangedNotApproved = [];
+
             for (const [currRow, currColumn] of offsetIndexesGenerator(
               [rowIndex, columnIndex],
               [rowOffset, columnOffset]
             )) {
               const currElement = this.matrix[currRow][currColumn];
               if (state === stepAvailabilityCheckStates.WAIT_OPPONENT) {
+
                 if (currElement === opponentMatrixValue) {
                   state = stepAvailabilityCheckStates.WAIT_NOT_EMPTY;
                   willChangedNotApproved.push([currRow, currColumn]);
-                } else break;
+                } else {
+                  break;
+                }
+
               } else {
+
                 if (currElement === this.currPlayer) {
-                  available = true;
+                  isAvailable = true;
                   willChangedNotApproved.forEach(element =>
                     willChanged.push(element)
                   );
                   break;
-                } else if (currElement !== opponentMatrixValue) break;
-                else willChangedNotApproved.push([currRow, currColumn]);
+                } else if (currElement !== opponentMatrixValue) {
+                  break;
+                } else {
+                  willChangedNotApproved.push([currRow, currColumn]);
+                }
+
               }
             }
           });
-          if (available)
+
+          if (isAvailable)
             availableSteps.push([rowIndex, columnIndex, willChanged]);
         }
       })

@@ -20,10 +20,16 @@ const styles = {
   3: { fill: BLACK_COLOR, border: true },
 };
 
-COMPUTER_MODE = 0;
-USER_MODE = 1;
+const COMPUTER_MODE = 0;
+const USER_MODE = 1;
 
-COMPUTER_THINK_TIMEOUT = 1000;
+const COMPUTER_THINK_TIMEOUT = 1000;
+
+const RESULT_TEXTS = {
+  white: "Congratulations, white, you won!",
+  black: "Congratulations, black, you won!",
+  draw: "It's draw. We have no winner",
+};
 
 module.exports = {
   BLACK_COLOR,
@@ -40,4 +46,5 @@ module.exports = {
   COMPUTER_THINK_TIMEOUT,
   COMPUTER_MODE,
   USER_MODE,
+  RESULT_TEXTS,
 };
