@@ -212,7 +212,7 @@ class ReversiModel {
   getBestMoveIndex(stepsArray, isEnemyTurn) {
     const { whiteScore, blackScore } = this.input;
 
-    const arrayOfSEVs = stepsArray.map(({ willChanged }) => {
+    const arrayOfMovesCosts = stepsArray.map(({ willChanged }) => {
       if (isEnemyTurn) {
         // 1 for just placed chip
         // x2 because of chip flipping (- for you, + for enemy)
@@ -224,8 +224,9 @@ class ReversiModel {
       }
     });
 
-    const maxSEV = Math.max(...arrayOfSEVs);
-    return arrayOfSEVs.findIndex(sev => sev === maxSEV);
+    // we need min() function here as we have an anti-reversi in task
+    const minMoveCost = Math.min(...arrayOfMovesCosts);
+    return arrayOfMovesCosts.findIndex(moveCost => moveCost === minMoveCost);
   }
 
   calculateAvailableSteps() {
