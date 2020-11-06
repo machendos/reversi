@@ -44,9 +44,26 @@ class ReversiModel {
     this.currPlayer = BLACK_CHIP_MATRIX_VALUE;
     this.computerMode = false;
     this.isOneOfPlayersStuck = false;
-
+    
     this.input.onModeChange(mode => {
+      // set init state of ReversiModel
+      this.countChipsTotal = 0;
+      this.availableSteps = [];
+      this.input = input;
+      this.gameFinished = false;
       this.computerMode = mode === COMPUTER_MODE;
+      this.currPlayer = BLACK_CHIP_MATRIX_VALUE;
+      this.isOneOfPlayersStuck = false;
+
+      // set init state of ReversiController
+      this.input.whiteScore = 0;
+      this.input.blackScore = 0;
+
+      // redraw game field
+      this.input.init();
+      this.input.render();
+      this.initModel();
+
       this.tryComputerStep();
     });
 
@@ -59,8 +76,9 @@ class ReversiModel {
 
   makeStep(rowIndex, columnIndex) {
     const available = this.availableSteps.find(
-      ([testedRowIndex, testedColumnIndex]) =>
-        testedRowIndex === rowIndex && testedColumnIndex === columnIndex
+      (availableStep) =>
+        availableStep.rowIndex === rowIndex &&
+        availableStep.columnIndex === columnIndex
     );
 
     if (!available) return;
@@ -74,7 +92,7 @@ class ReversiModel {
     this.input.put(rowIndex, columnIndex, this.currPlayer);
     const opponentMatrixValue = this.currPlayer === 1 ? 2 : 1;
 
-    available[2].map(([rowIndex, columnIndex]) => {
+    available.willChanged.forEach(([rowIndex, columnIndex]) => {
       this.matrix[rowIndex][columnIndex] = this.currPlayer;
       this.input.changeColor(
         rowIndex,
@@ -145,7 +163,8 @@ class ReversiModel {
   }
 
   removeOldAvailableSteps() {
-    this.availableSteps.forEach(indexes => this.input.remove(...indexes));
+    this.availableSteps.forEach(({ rowIndex, columnIndex }) =>
+      this.input.remove(rowIndex, columnIndex));
   }
 
   setNewAvailableSteps() {
@@ -168,7 +187,7 @@ class ReversiModel {
       this.isOneOfPlayersStuck = false;
     }
 
-    this.availableSteps.forEach(([rowIndex, columnIndex]) => {
+    this.availableSteps.forEach(({ rowIndex, columnIndex }) => {
       this.input.put(rowIndex, columnIndex, AVAILABLE_STEP_MATRIX_VALUE);
     });
   }
@@ -177,14 +196,36 @@ class ReversiModel {
     if (this.gameFinished) return;
 
     if (this.computerMode && this.currPlayer === BLACK_CHIP_MATRIX_VALUE) {
+      const randomStep = this.availableSteps[
+        Math.floor(Math.random() * this.availableSteps.length)
+      ];
+
+      const bestMoveIndex = this.getBestMoveIndex(this.availableSteps, false);
+      const bestMove = this.availableSteps[bestMoveIndex];
+
       setTimeout(() => {
-        this.makeStep(
-          ...this.availableSteps[
-            Math.floor(Math.random() * this.availableSteps.length)
-          ]
-        );
+        this.makeStep(bestMove.rowIndex, bestMove.columnIndex);
       }, COMPUTER_THINK_TIMEOUT);
     }
+  }
+
+  getBestMoveIndex(stepsArray, isEnemyTurn) {
+    const { whiteScore, blackScore } = this.input;
+
+    const arrayOfSEVs = stepsArray.map(({ willChanged }) => {
+      if (isEnemyTurn) {
+        // 1 for just placed chip
+        // x2 because of chip flipping (- for you, + for enemy)
+        return blackScore - whiteScore - 1 - (2 * willChanged.length);
+      } else {
+        // 1 for just placed chip
+        // x2 because of chip flipping (+ for you, - for enemy)
+        return blackScore - whiteScore + 1 + (2 * willChanged.length);
+      }
+    });
+
+    const maxSEV = Math.max(...arrayOfSEVs);
+    return arrayOfSEVs.findIndex(sev => sev === maxSEV);
   }
 
   calculateAvailableSteps() {
@@ -234,7 +275,7 @@ class ReversiModel {
           });
 
           if (isAvailable)
-            availableSteps.push([rowIndex, columnIndex, willChanged]);
+            availableSteps.push({ rowIndex, columnIndex, willChanged });
         }
       })
     );
