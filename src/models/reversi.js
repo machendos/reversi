@@ -9,6 +9,7 @@ const {
   WHITE_CHIP_MATRIX_VALUE,
   BLACK_CHIP_MATRIX_VALUE,
   AVAILABLE_STEP_MATRIX_VALUE,
+  BLACK_HOLE_MATRIX_VALUE,
   COMPUTER_THINK_TIMEOUT,
 } = require(__dirname + '/../utils/constants');
 
@@ -125,6 +126,12 @@ class ReversiModel {
     startedPosition.white.forEach(
       ({ row, column }) => (this.matrix[row][column] = WHITE_CHIP_MATRIX_VALUE)
     );
+
+    // set black hole
+    // use shifting to avoid black hole overflow 2 start chips
+    const blackHoleCoords = [Math.floor(Math.random() * 6), Math.floor(Math.random() * 6)]
+      .map(index => index <= 3 ? index : index + 2);
+    this.matrix[blackHoleCoords[0]][blackHoleCoords[1]] = BLACK_HOLE_MATRIX_VALUE;
 
     this.matrix.map((row, rowIndex) =>
       row.map((element, columnIndex) =>
@@ -265,7 +272,7 @@ class ReversiModel {
                     willChanged.push(element)
                   );
                   break;
-                } else if (currElement !== opponentMatrixValue) {
+                } else if (currElement !== opponentMatrixValue || currElement === BLACK_HOLE_MATRIX_VALUE) {
                   break;
                 } else {
                   willChangedNotApproved.push([currRow, currColumn]);

@@ -2,10 +2,13 @@ const NO_CHIP_MATRIX_VALUE = 0;
 const WHITE_CHIP_MATRIX_VALUE = 1;
 const BLACK_CHIP_MATRIX_VALUE = 2;
 const AVAILABLE_STEP_MATRIX_VALUE = 3;
+const BLACK_HOLE_MATRIX_VALUE = 4;
 
 const WHITE_COLOR = 'white';
 const BLACK_COLOR = 'black';
 const BOARD_COLOR = 'darkgreen';
+// black hole is red because black color is already occupied by black chip
+const RED_COLOR = 'red';
 
 const FLIP_ITERATIONS = 10;
 const FLIP_ITERATIONS_INTERVAL = 15;
@@ -18,6 +21,7 @@ const styles = {
   1: { fill: WHITE_COLOR },
   2: { fill: BLACK_COLOR },
   3: { fill: BLACK_COLOR, border: true },
+  4: { fill: RED_COLOR },
 };
 
 const COMPUTER_MODE = 0;
@@ -43,6 +47,7 @@ module.exports = {
   WHITE_CHIP_MATRIX_VALUE,
   BLACK_CHIP_MATRIX_VALUE,
   AVAILABLE_STEP_MATRIX_VALUE,
+  BLACK_HOLE_MATRIX_VALUE,
   COMPUTER_THINK_TIMEOUT,
   COMPUTER_MODE,
   USER_MODE,
