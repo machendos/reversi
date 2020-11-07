@@ -129,8 +129,8 @@ class ReversiModel {
 
     // set black hole
     // use shifting to avoid black hole overflow 2 start chips
-    const blackHoleCoords = [Math.floor(Math.random() * 6), Math.floor(Math.random() * 6)]
-      .map(index => index <= 3 ? index : index + 2);
+    const blackHoleCoords = [Math.floor(Math.random() * 5), Math.floor(Math.random() * 6)]
+      .map(index => index < 3 ? index : index + 2);
     this.matrix[blackHoleCoords[0]][blackHoleCoords[1]] = BLACK_HOLE_MATRIX_VALUE;
 
     this.matrix.map((row, rowIndex) =>
