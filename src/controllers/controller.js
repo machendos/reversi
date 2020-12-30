@@ -20,7 +20,8 @@ const gameResultText = document.getElementById('game-result-text');
 class ReversiController extends Canva {
   constructor(canvasContainer) {
     super(canvasContainer);
-    this.gameResult = '';
+    this.whiteScore = 0;
+    this.blackScore = 0;
   }
 
   onModeChange(listener) {
@@ -43,30 +44,23 @@ class ReversiController extends Canva {
   }
 
   chipCounterIncrement(player, incrementCount) {
-    const oldWhiteValue = parseInt(whiteChipsCounter.innerText);
-    const oldBlackValue = parseInt(blackChipsCounter.innerText);
-
     if (player === WHITE_CHIP_MATRIX_VALUE) {
-      whiteChipsCounter.innerText = oldWhiteValue + incrementCount;
-      this.setLeader(oldWhiteValue + incrementCount, oldBlackValue);
+      this.whiteScore += incrementCount;
+      whiteChipsCounter.innerText = this.whiteScore;
     } else {
-      blackChipsCounter.innerText = oldBlackValue + incrementCount;
-      this.setLeader(oldWhiteValue, oldBlackValue + incrementCount);
-    }
-  }
-
-  setLeader(whiteScore, blackScore) {
-    if (whiteScore > blackScore) {
-      this.gameResult = 'white';
-    } else if (blackScore > whiteScore) {
-      this.gameResult = 'black';
-    } else {
-      this.gameResult = 'draw';
+      this.blackScore += incrementCount;
+      blackChipsCounter.innerText = this.blackScore;
     }
   }
 
   handleGameFinish() {
-    gameResultText.innerText = RESULT_TEXTS[this.gameResult];
+    if (this.whiteScore > this.blackScore) {
+      gameResultText.innerText = RESULT_TEXTS.white;
+    } else if (this.blackScore > this.whiteScore) {
+      gameResultText.innerText = RESULT_TEXTS.black;
+    } else {
+      gameResultText.innerText = RESULT_TEXTS.draw;
+    }
   }
 }
 
